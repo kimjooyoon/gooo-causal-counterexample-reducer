@@ -1,0 +1,15 @@
+{
+  "schema": "gooo/causal-counterexample-reducer/metrics/v1",
+  "integer_vectors": [
+    "nodes.before_after",
+    "edges.before_after",
+    "evidence.before_after",
+    "cell_dependencies.before_after",
+    "original_state_keys.before_after"
+  ],
+  "integer_scalars": ["oracle_calls", "wall_ms", "peak_rss_kib", "repository_writes", "local_test_executions", "cross_project_required_gates"],
+  "correctness_is_separate": true,
+  "aggregate_scores": false,
+  "percentages": false,
+  "runtime_repository_writes": 0
+}

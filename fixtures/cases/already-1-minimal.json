@@ -1,0 +1,33 @@
+{
+  "schema": "gooo.causal-counterexample-reducer/input/v1",
+  "decision_report": {
+    "schema": "gooo.causal-counterexample-reducer/decision-report/v1",
+    "scenario": "already-1-minimal",
+    "source_digest": "sha256:source-already-minimal",
+    "contract_digest": "causal-counterexample-reducer-v1",
+    "fixture_digest": "sha256:fixture-already-minimal",
+    "toolchain_digest": "sha256:go1.27",
+    "runner_digest": "sha256:runner-v1",
+    "decision": "REFUTED",
+    "priority": 3,
+    "direct_cause": "contradiction is already isolated",
+    "witness": {
+      "claim": "causal invariant must hold",
+      "contradiction": "the isolated edge contradicts the invariant",
+      "required_node_ids": ["n-anchor"],
+      "required_edge_ids": ["e-anchor"],
+      "required_evidence_ids": ["ev-anchor"],
+      "required_cell_ids": ["cell-anchor"],
+      "required_state_keys": ["anchor"]
+    }
+  },
+  "causal_graph": {
+    "schema": "gooo.causal-counterexample-reducer/causal-graph/v1",
+    "nodes": [{"id": "n-anchor", "kind": "decision"}, {"id": "n-context", "kind": "context"}],
+    "edges": [{"id": "e-anchor", "from": "n-anchor", "to": "n-context"}]
+  },
+  "evidence_digests": [{"id": "ev-anchor", "digest": "sha256:ev-anchor", "observed_digest": "sha256:ev-anchor", "fresh": true}],
+  "cell_dependencies": [{"id": "cell-anchor", "cell": "decision", "depends_on": []}],
+  "original_state": {"anchor": "contradiction"},
+  "oracle": {"available": true, "graph_bounded": true, "tie_break_unique": true, "replay_stable": true}
+}

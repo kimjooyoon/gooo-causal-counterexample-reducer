@@ -1,0 +1,38 @@
+{
+  "schema": "gooo.causal-counterexample-reducer/input/v1",
+  "decision_report": {
+    "schema": "gooo.causal-counterexample-reducer/decision-report/v1",
+    "scenario": "dependency-blocked-unknown",
+    "source_digest": "sha256:source-dependency-blocked",
+    "contract_digest": "causal-counterexample-reducer-v1",
+    "fixture_digest": "sha256:fixture-dependency-blocked",
+    "toolchain_digest": "sha256:go1.27",
+    "runner_digest": "sha256:runner-v1",
+    "decision": "UNKNOWN",
+    "priority": 2,
+    "direct_cause": "dependent cell cannot be evaluated",
+    "unknown": {
+      "stage": "evaluate",
+      "step": "resolve-dependency-frontier",
+      "reason": "a dependent cell is blocked by an unresolved frontier",
+      "unknown_class": "dependency-blocked",
+      "next_operation": "resolve the frontier cells and replay",
+      "blocked_by": ["cell:cell-provenance", "evidence:ev-provenance"],
+      "direct_cause": "dependent cell cannot be evaluated",
+      "required_node_ids": ["n-anchor"],
+      "required_edge_ids": ["e-anchor"],
+      "required_evidence_ids": ["ev-provenance"],
+      "required_cell_ids": ["cell-anchor", "cell-provenance"],
+      "required_state_keys": ["anchor", "provenance"]
+    }
+  },
+  "causal_graph": {
+    "schema": "gooo.causal-counterexample-reducer/causal-graph/v1",
+    "nodes": [{"id": "n-anchor", "kind": "decision"}, {"id": "n-provenance", "kind": "dependency"}, {"id": "n-noise", "kind": "noise"}],
+    "edges": [{"id": "e-anchor", "from": "n-anchor", "to": "n-provenance"}, {"id": "e-noise", "from": "n-provenance", "to": "n-noise"}]
+  },
+  "evidence_digests": [{"id": "ev-provenance", "digest": "sha256:ev-provenance", "observed_digest": "sha256:ev-provenance", "fresh": true}, {"id": "ev-noise", "digest": "sha256:ev-noise", "observed_digest": "sha256:ev-noise", "fresh": true}],
+  "cell_dependencies": [{"id": "cell-anchor", "cell": "decision", "depends_on": []}, {"id": "cell-provenance", "cell": "provenance", "depends_on": ["cell-anchor"]}, {"id": "cell-noise", "cell": "noise", "depends_on": ["cell-provenance"]}],
+  "original_state": {"anchor": "blocked", "provenance": "unresolved", "noise": "discardable"},
+  "oracle": {"available": true, "graph_bounded": true, "tie_break_unique": true, "replay_stable": true}
+}

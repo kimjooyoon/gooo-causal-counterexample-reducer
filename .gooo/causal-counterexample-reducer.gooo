@@ -1,0 +1,58 @@
+gooo causal_counterexample_reducer v1
+
+authority name=metacode
+denominator id=causal-counterexample-reducer-v1 scenarios=7 unit=causal_slice
+decision statuses=CLOSED,UNKNOWN,REFUTED
+precedence REFUTED>UNKNOWN>CLOSED
+unknown_fields stage,step,reason,unknown_class,next_operation,blocked_by
+source_policy input=immutable_decision_report,causal_graph,evidence_digests,cell_dependencies,original_state output=caller_owned_temp repository_writes=0
+toolchain go=1.27 digest=sha256:go1.27
+runtime repository_writes=0 local_test_executions=0 cross_project_required_gates=0
+
+deletion_order ordinal=1 kind=node target=causal_graph.nodes
+deletion_order ordinal=2 kind=edge target=causal_graph.edges
+deletion_order ordinal=3 kind=evidence target=evidence_digests
+deletion_order ordinal=4 kind=cell_dependency target=cell_dependencies
+deletion_order ordinal=5 kind=original_state target=original_state
+tie_break kind=lexical_id unique=true
+graph_bound max_items=32 behavior=UNKNOWN
+oracle name=causal-preservation required=true contract=immutable-decision-replay replay_count=2
+replay_receipt fields=run,input_digest,candidate_digest,observed_decision,stable,reason
+claim minimality=fixed-order-deletion-1-minimal global_minimum=false predicate=monotone
+preservation fields=decision,priority,unknown_fields,direct_cause,blocked_by,witness,provenance
+improvement_pair exact=scenario,source,contract,fixture,toolchain,runner missing=UNKNOWN vectors=before_after_integer_only
+
+state_transition ordinal=1 from=INPUT to=VALIDATING evidence=immutable_report_graph_evidence_state
+state_transition ordinal=2 from=VALIDATING to=BLOCKED_UNKNOWN evidence=oracle_or_evidence_or_bound_or_tiebreak
+state_transition ordinal=3 from=VALIDATING to=DELETING evidence=declared_order_and_lexical_tie_break
+state_transition ordinal=4 from=DELETING to=REPLAYING evidence=two_replay_receipt
+state_transition ordinal=5 from=REPLAYING to=DELETING evidence=preservation_oracle
+state_transition ordinal=6 from=DELETING to=MINIMAL evidence=all_remaining_single_deletions_rejected
+state_transition ordinal=7 from=MINIMAL to=REFUTED evidence=preservation_failure_or_malformed_input
+state_transition ordinal=8 from=MINIMAL to=UNKNOWN evidence=unresolved_replay_or_bound
+state_transition ordinal=9 from=MINIMAL to=CLOSED evidence=preservation_complete
+
+invariant group=FOUNDATION ordinal=1 id=F01 name=immutable-input
+invariant group=FOUNDATION ordinal=2 id=F02 name=caller-owned-output
+invariant group=FOUNDATION ordinal=3 id=F03 name=fixed-order-deletion
+invariant group=FOUNDATION ordinal=4 id=F04 name=malformed-fail-closed
+invariant group=COHERENCE ordinal=5 id=C01 name=decision-precedence
+invariant group=COHERENCE ordinal=6 id=C02 name=unknown-six-fields
+invariant group=COHERENCE ordinal=7 id=C03 name=witness-or-frontier-preservation
+invariant group=COHERENCE ordinal=8 id=C04 name=replay-receipt
+invariant group=REGRESSION ordinal=9 id=R01 name=provenance-tuple
+invariant group=REGRESSION ordinal=10 id=R02 name=integer-metric-vectors
+invariant group=REGRESSION ordinal=11 id=R03 name=no-global-minimum-claim
+invariant group=REGRESSION ordinal=12 id=R04 name=runtime-zero-gates
+
+vector name=DRIVER indicators=nodes_removed,edges_removed,evidence_removed,cell_dependencies_removed
+vector name=OUTCOME indicators=decision_preserved,priority_preserved,unknown_fields_preserved,witness_preserved
+vector name=GUARDRAIL indicators=oracle_calls,wall_ms,peak_rss_kib,repository_writes
+
+scenario ordinal=1 id=normal-reduction fixture=fixtures/cases/normal-reduction.json expected=REFUTED
+scenario ordinal=2 id=already-1-minimal fixture=fixtures/cases/already-1-minimal.json expected=REFUTED
+scenario ordinal=3 id=direct-unknown fixture=fixtures/cases/direct-unknown.json expected=UNKNOWN
+scenario ordinal=4 id=dependency-blocked-unknown fixture=fixtures/cases/dependency-blocked-unknown.json expected=UNKNOWN
+scenario ordinal=5 id=stale-evidence fixture=fixtures/cases/stale-evidence.json expected=UNKNOWN
+scenario ordinal=6 id=decision-change fixture=fixtures/cases/decision-change.json expected=REFUTED
+scenario ordinal=7 id=witness-loss fixture=fixtures/cases/witness-loss.json expected=REFUTED
