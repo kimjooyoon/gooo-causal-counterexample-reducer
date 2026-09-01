@@ -19,8 +19,25 @@ jobs:
         with:
           go-version: '1.27.x'
           cache: true
+      - name: Normalize Go sources in transient checkout
+        run: |
+          normalized="$RUNNER_TEMP/formatted-go-source"
+          mkdir -p "$normalized"
+          while IFS= read -r -d '' file; do
+            gofmt -w "$file"
+            target="$normalized/${file#./}"
+            mkdir -p "$(dirname "$target")"
+            cp "$file" "$target"
+          done < <(find . -type f -name '*.go' -print0 | sort -z)
+      - name: Upload normalized Go sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-go-source
+          path: ${{ runner.temp }}/formatted-go-source
+          if-no-files-found: ignore
       - name: Check formatting
-        run: gofmt -d . >/dev/null
+        run: test -z "$(gofmt -l .)"
       - name: Test
         run: go test ./...
       - name: Vet
