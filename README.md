@@ -6,7 +6,7 @@ The reducer makes one declared, lexical, fixed-order deletion pass. Its contract
 
 ## Contract first
 
-The semantic owner is [.gooo/causal-counterexample-reducer.gooo](/Users/alice/meta-go/gooo-causal-counterexample-reducer/.gooo/causal-counterexample-reducer.gooo). It fixes:
+The semantic owner is [.gooo/causal-counterexample-reducer.gooo](./.gooo/causal-counterexample-reducer.gooo). It fixes:
 
 - `REFUTED > UNKNOWN > CLOSED` precedence;
 - the six required `UNKNOWN` fields: `stage`, `step`, `reason`, `unknown_class`, `next_operation`, and `blocked_by`;
