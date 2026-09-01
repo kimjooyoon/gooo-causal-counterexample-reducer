@@ -23,21 +23,39 @@ func main() {
 		fatal(errors.New("-output is required"))
 	}
 	contract, err := reducer.LoadContract(*contractPath)
-	if err != nil { fatal(err) }
-	if err := os.MkdirAll(*outputPath, 0o755); err != nil { fatal(err) }
+	if err != nil {
+		fatal(err)
+	}
+	if err := os.MkdirAll(*outputPath, 0o755); err != nil {
+		fatal(err)
+	}
 
 	switch *mode {
 	case "reduce":
-		if *inputPath == "" { fatal(errors.New("-input is required in reduce mode")) }
+		if *inputPath == "" {
+			fatal(errors.New("-input is required in reduce mode"))
+		}
 		result := reduceFile(*inputPath, contract)
-		if err := writeJSON(filepath.Join(*outputPath, "reduction-report.json"), result); err != nil { fatal(err) }
+		if err := writeJSON(filepath.Join(*outputPath, "reduction-report.json"), result); err != nil {
+			fatal(err)
+		}
 	case "conformance":
 		report, metrics, proofs, err := runConformance(*fixturesRoot, contract, *outputPath)
-		if err != nil { fatal(err) }
-		if err := writeJSON(filepath.Join(*outputPath, "conformance-report.json"), report); err != nil { fatal(err) }
-		if err := writeJSON(filepath.Join(*outputPath, "metrics.json"), metrics); err != nil { fatal(err) }
-		if err := writeJSON(filepath.Join(*outputPath, "proof-vectors.json"), proofs); err != nil { fatal(err) }
-		if !report.Pass { os.Exit(1) }
+		if err != nil {
+			fatal(err)
+		}
+		if err := writeJSON(filepath.Join(*outputPath, "conformance-report.json"), report); err != nil {
+			fatal(err)
+		}
+		if err := writeJSON(filepath.Join(*outputPath, "metrics.json"), metrics); err != nil {
+			fatal(err)
+		}
+		if err := writeJSON(filepath.Join(*outputPath, "proof-vectors.json"), proofs); err != nil {
+			fatal(err)
+		}
+		if !report.Pass {
+			os.Exit(1)
+		}
 	default:
 		fatal(fmt.Errorf("unsupported mode %q", *mode))
 	}
@@ -45,14 +63,20 @@ func main() {
 
 func reduceFile(path string, contract reducer.Contract) reducer.Result {
 	data, err := os.ReadFile(path)
-	if err != nil { return reducer.FailClosedResult(contract, filepath.Base(path), err.Error()) }
+	if err != nil {
+		return reducer.FailClosedResult(contract, filepath.Base(path), err.Error())
+	}
 	var input reducer.Input
-	if err := json.Unmarshal(data, &input); err != nil { return reducer.FailClosedResult(contract, filepath.Base(path), err.Error()) }
+	if err := json.Unmarshal(data, &input); err != nil {
+		return reducer.FailClosedResult(contract, filepath.Base(path), err.Error())
+	}
 	return reducer.Reduce(input, contract)
 }
 
 func runConformance(root string, contract reducer.Contract, output string) (reducer.ConformanceReport, map[string]reducer.Metrics, map[string]reducer.ProofVectors, error) {
-	if err := os.MkdirAll(filepath.Join(output, "cases"), 0o755); err != nil { return reducer.ConformanceReport{}, nil, nil, err }
+	if err := os.MkdirAll(filepath.Join(output, "cases"), 0o755); err != nil {
+		return reducer.ConformanceReport{}, nil, nil, err
+	}
 	report := reducer.ConformanceReport{Schema: "gooo.causal-counterexample-reducer/conformance/v1", DenominatorID: contract.ID, Scenarios: len(contract.Scenarios), Cases: []reducer.CaseResult{}}
 	metrics := make(map[string]reducer.Metrics, len(contract.Scenarios))
 	proofs := make(map[string]reducer.ProofVectors, len(contract.Scenarios))
@@ -76,17 +100,36 @@ func runConformance(root string, contract reducer.Contract, output string) (redu
 		report.Cases = append(report.Cases, caseResult)
 		metrics[scenario.ID] = result.Metrics
 		proofs[scenario.ID] = result.Proof
-		switch result.Decision { case reducer.Closed: report.Closed++; case reducer.Unknown: report.Unknown++; case reducer.Refuted: report.Refuted++ }
-		if !pass { allPass = false }
-		if err := writeJSON(filepath.Join(output, "cases", scenario.ID+".report.json"), result); err != nil { return reducer.ConformanceReport{}, nil, nil, err }
+		switch result.Decision {
+		case reducer.Closed:
+			report.Closed++
+		case reducer.Unknown:
+			report.Unknown++
+		case reducer.Refuted:
+			report.Refuted++
+		}
+		if !pass {
+			allPass = false
+		}
+		if err := writeJSON(filepath.Join(output, "cases", scenario.ID+".report.json"), result); err != nil {
+			return reducer.ConformanceReport{}, nil, nil, err
+		}
 	}
 	malformedData, err := os.ReadFile(filepath.Join(root, "fixtures", "malformed", "invalid.json"))
-	if err != nil { return reducer.ConformanceReport{}, nil, nil, err }
+	if err != nil {
+		return reducer.ConformanceReport{}, nil, nil, err
+	}
 	malformed := reducer.FailClosedResult(contract, "malformed-input", "invalid JSON")
-	if json.Valid(malformedData) { malformed = reducer.FailClosedResult(contract, "malformed-input", "malformed fixture unexpectedly parsed") }
+	if json.Valid(malformedData) {
+		malformed = reducer.FailClosedResult(contract, "malformed-input", "malformed fixture unexpectedly parsed")
+	}
 	report.Malformed = reducer.MalformedCase{ID: "malformed-input", Expected: reducer.Refuted, Actual: malformed.Decision, Pass: malformed.Decision == reducer.Refuted}
-	if err := writeJSON(filepath.Join(output, "cases", "malformed-input.report.json"), malformed); err != nil { return reducer.ConformanceReport{}, nil, nil, err }
-	if !report.Malformed.Pass { allPass = false }
+	if err := writeJSON(filepath.Join(output, "cases", "malformed-input.report.json"), malformed); err != nil {
+		return reducer.ConformanceReport{}, nil, nil, err
+	}
+	if !report.Malformed.Pass {
+		allPass = false
+	}
 	report.ProofVectors = proofs[contract.Scenarios[0].ID]
 	report.IndicatorDistribution = indicatorDistributionFromCase(report.Cases[0], proofs[contract.Scenarios[0].ID])
 	report.RepositoryWrites = 0
@@ -123,7 +166,9 @@ func indicatorDistributionFromCase(caseResult reducer.CaseResult, _ reducer.Proo
 
 func writeJSON(path string, value any) error {
 	data, err := json.MarshalIndent(value, "", "  ")
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	data = append(data, '\n')
 	return os.WriteFile(path, data, 0o644)
 }

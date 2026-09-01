@@ -7,12 +7,12 @@ import "time"
 func FailClosedResult(contract Contract, scenario, reason string) Result {
 	started := time.Now()
 	result := Result{
-		Schema:   "gooo.causal-counterexample-reducer/result/v1",
-		Scenario: scenario,
-		Decision: Refuted,
-		Priority: Refuted.Priority(),
-		Slice: CausalSlice{Nodes: []Node{}, Edges: []Edge{}, EvidenceDigests: []EvidenceDigest{}, CellDependencies: []CellDependency{}, OriginalState: map[string]string{}},
-		Minimality: Minimality{Status: "REFUTED", Scope: "fixed-order-deletion", GlobalMinimumClaim: contract.GlobalMinimumClaim, AuditPassed: false},
+		Schema:               "gooo.causal-counterexample-reducer/result/v1",
+		Scenario:             scenario,
+		Decision:             Refuted,
+		Priority:             Refuted.Priority(),
+		Slice:                CausalSlice{Nodes: []Node{}, Edges: []Edge{}, EvidenceDigests: []EvidenceDigest{}, CellDependencies: []CellDependency{}, OriginalState: map[string]string{}},
+		Minimality:           Minimality{Status: "REFUTED", Scope: "fixed-order-deletion", GlobalMinimumClaim: contract.GlobalMinimumClaim, AuditPassed: false},
 		PreservationFailures: []PreservationFailure{{Unit: "input", Reason: "malformed input: " + reason}},
 	}
 	result.Metrics = metricsFor(result.Slice, result.Slice, 0, started)

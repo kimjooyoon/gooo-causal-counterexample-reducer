@@ -23,12 +23,12 @@ func Reduce(input Input, contract Contract) Result {
 	started := time.Now()
 	base := cloneSlice(input)
 	result := Result{
-		Schema:       "gooo.causal-counterexample-reducer/result/v1",
-		Scenario:     input.DecisionReport.Scenario,
-		Decision:     input.DecisionReport.Decision,
-		Priority:     input.DecisionReport.Priority,
-		Slice:        base,
-		Provenance:   provenanceOf(input.DecisionReport),
+		Schema:         "gooo.causal-counterexample-reducer/result/v1",
+		Scenario:       input.DecisionReport.Scenario,
+		Decision:       input.DecisionReport.Decision,
+		Priority:       input.DecisionReport.Priority,
+		Slice:          base,
+		Provenance:     provenanceOf(input.DecisionReport),
 		ReplayReceipts: []ReplayReceipt{},
 	}
 	result.Metrics = metricsFor(base, base, 0, started)
@@ -104,41 +104,67 @@ func Reduce(input Input, contract Contract) Result {
 }
 
 func validateInput(input Input, contract Contract) error {
-	if input.Schema != "gooo.causal-counterexample-reducer/input/v1" { return fmt.Errorf("unexpected input schema") }
+	if input.Schema != "gooo.causal-counterexample-reducer/input/v1" {
+		return fmt.Errorf("unexpected input schema")
+	}
 	report := input.DecisionReport
-	if report.Schema != "gooo.causal-counterexample-reducer/decision-report/v1" { return fmt.Errorf("unexpected decision report schema") }
+	if report.Schema != "gooo.causal-counterexample-reducer/decision-report/v1" {
+		return fmt.Errorf("unexpected decision report schema")
+	}
 	if report.Scenario == "" || report.ContractDigest != contract.ID || report.SourceDigest == "" || report.FixtureDigest == "" || report.ToolchainDigest != contract.ToolchainDigest || report.RunnerDigest == "" {
 		return fmt.Errorf("immutable provenance tuple is incomplete or mismatched")
 	}
-	if !validDecision(report.Decision) || report.Priority != report.Decision.Priority() { return fmt.Errorf("decision priority is invalid") }
-	if report.Decision == Unknown && !report.Unknown.Valid() { return fmt.Errorf("UNKNOWN must contain six required fields") }
-	if report.Decision == Refuted && !report.Witness.Valid() { return fmt.Errorf("REFUTED must contain a contradiction witness") }
-	if input.CausalGraph.Schema != "gooo.causal-counterexample-reducer/causal-graph/v1" { return fmt.Errorf("unexpected causal graph schema") }
-	if input.OriginalState == nil { return fmt.Errorf("original state is required") }
-	if err := validateIDs(input); err != nil { return err }
+	if !validDecision(report.Decision) || report.Priority != report.Decision.Priority() {
+		return fmt.Errorf("decision priority is invalid")
+	}
+	if report.Decision == Unknown && !report.Unknown.Valid() {
+		return fmt.Errorf("UNKNOWN must contain six required fields")
+	}
+	if report.Decision == Refuted && !report.Witness.Valid() {
+		return fmt.Errorf("REFUTED must contain a contradiction witness")
+	}
+	if input.CausalGraph.Schema != "gooo.causal-counterexample-reducer/causal-graph/v1" {
+		return fmt.Errorf("unexpected causal graph schema")
+	}
+	if input.OriginalState == nil {
+		return fmt.Errorf("original state is required")
+	}
+	if err := validateIDs(input); err != nil {
+		return err
+	}
 	return nil
 }
 
 func validateIDs(input Input) error {
 	nodeIDs := map[string]bool{}
 	for _, node := range input.CausalGraph.Nodes {
-		if node.ID == "" || nodeIDs[node.ID] { return fmt.Errorf("node IDs must be non-empty and unique") }
+		if node.ID == "" || nodeIDs[node.ID] {
+			return fmt.Errorf("node IDs must be non-empty and unique")
+		}
 		nodeIDs[node.ID] = true
 	}
 	edgeIDs := map[string]bool{}
 	for _, edge := range input.CausalGraph.Edges {
-		if edge.ID == "" || edgeIDs[edge.ID] { return fmt.Errorf("edge IDs must be non-empty and unique") }
-		if !nodeIDs[edge.From] || !nodeIDs[edge.To] { return fmt.Errorf("edge %q has a dangling endpoint", edge.ID) }
+		if edge.ID == "" || edgeIDs[edge.ID] {
+			return fmt.Errorf("edge IDs must be non-empty and unique")
+		}
+		if !nodeIDs[edge.From] || !nodeIDs[edge.To] {
+			return fmt.Errorf("edge %q has a dangling endpoint", edge.ID)
+		}
 		edgeIDs[edge.ID] = true
 	}
 	evidenceIDs := map[string]bool{}
 	for _, evidence := range input.EvidenceDigests {
-		if evidence.ID == "" || evidence.Digest == "" || evidence.ObservedDigest == "" || evidenceIDs[evidence.ID] { return fmt.Errorf("evidence digests must be complete and unique") }
+		if evidence.ID == "" || evidence.Digest == "" || evidence.ObservedDigest == "" || evidenceIDs[evidence.ID] {
+			return fmt.Errorf("evidence digests must be complete and unique")
+		}
 		evidenceIDs[evidence.ID] = true
 	}
 	cellIDs := map[string]bool{}
 	for _, cell := range input.CellDependencies {
-		if cell.ID == "" || cell.Cell == "" || cellIDs[cell.ID] { return fmt.Errorf("cell dependency IDs must be complete and unique") }
+		if cell.ID == "" || cell.Cell == "" || cellIDs[cell.ID] {
+			return fmt.Errorf("cell dependency IDs must be complete and unique")
+		}
 		cellIDs[cell.ID] = true
 	}
 	return nil
@@ -173,7 +199,9 @@ func preflightUnknown(input Input, contract Contract) *UnknownDetails {
 
 func stagedUnknown(input Input, stage, step, reason, class, next string, blockedBy []string) *UnknownDetails {
 	directCause := input.DecisionReport.DirectCause
-	if directCause == "" && input.DecisionReport.Unknown != nil { directCause = input.DecisionReport.Unknown.DirectCause }
+	if directCause == "" && input.DecisionReport.Unknown != nil {
+		directCause = input.DecisionReport.Unknown.DirectCause
+	}
 	return &UnknownDetails{Stage: stage, Step: step, Reason: reason, UnknownClass: class, NextOperation: next, BlockedBy: cloneStrings(blockedBy), DirectCause: directCause}
 }
 
@@ -182,14 +210,31 @@ func orderedUnits(slice CausalSlice, contract Contract) []deletionUnit {
 	for _, rule := range contract.DeletionOrder {
 		ids := make([]string, 0)
 		switch rule.Kind {
-		case "node": for _, item := range slice.Nodes { ids = append(ids, item.ID) }
-		case "edge": for _, item := range slice.Edges { ids = append(ids, item.ID) }
-		case "evidence": for _, item := range slice.EvidenceDigests { ids = append(ids, item.ID) }
-		case "cell_dependency": for _, item := range slice.CellDependencies { ids = append(ids, item.ID) }
-		case "original_state": for key := range slice.OriginalState { ids = append(ids, key) }
+		case "node":
+			for _, item := range slice.Nodes {
+				ids = append(ids, item.ID)
+			}
+		case "edge":
+			for _, item := range slice.Edges {
+				ids = append(ids, item.ID)
+			}
+		case "evidence":
+			for _, item := range slice.EvidenceDigests {
+				ids = append(ids, item.ID)
+			}
+		case "cell_dependency":
+			for _, item := range slice.CellDependencies {
+				ids = append(ids, item.ID)
+			}
+		case "original_state":
+			for key := range slice.OriginalState {
+				ids = append(ids, key)
+			}
 		}
 		sort.Strings(ids)
-		for _, id := range ids { units = append(units, deletionUnit{Kind: rule.Kind, ID: id}) }
+		for _, id := range ids {
+			units = append(units, deletionUnit{Kind: rule.Kind, ID: id})
+		}
 	}
 	return units
 }
@@ -214,50 +259,90 @@ func replayCandidate(input Input, candidate CausalSlice, unit deletionUnit, cont
 
 func preservesCandidate(input Input, candidate CausalSlice, unit deletionUnit, receipts []ReplayReceipt) bool {
 	for _, receipt := range receipts {
-		if receipt.ObservedDecision != input.DecisionReport.Decision || !receipt.Stable { return false }
+		if receipt.ObservedDecision != input.DecisionReport.Decision || !receipt.Stable {
+			return false
+		}
 	}
 	if input.DecisionReport.Decision == Unknown {
 		unknown := input.DecisionReport.Unknown
-		if !unknown.Valid() || !requiredIDsPresent(candidate, unknown.RequiredNodeIDs, unknown.RequiredEdgeIDs, unknown.RequiredEvidenceIDs, unknown.RequiredCellIDs, unknown.RequiredStateKeys) { return false }
-		if !blockedFrontierPresent(candidate, unknown.BlockedBy) { return false }
+		if !unknown.Valid() || !requiredIDsPresent(candidate, unknown.RequiredNodeIDs, unknown.RequiredEdgeIDs, unknown.RequiredEvidenceIDs, unknown.RequiredCellIDs, unknown.RequiredStateKeys) {
+			return false
+		}
+		if !blockedFrontierPresent(candidate, unknown.BlockedBy) {
+			return false
+		}
 	}
 	if input.DecisionReport.Decision == Refuted {
 		witness := input.DecisionReport.Witness
-		if !witness.Valid() || !requiredIDsPresent(candidate, witness.RequiredNodeIDs, witness.RequiredEdgeIDs, witness.RequiredEvidenceIDs, witness.RequiredCellIDs, witness.RequiredStateKeys) { return false }
+		if !witness.Valid() || !requiredIDsPresent(candidate, witness.RequiredNodeIDs, witness.RequiredEdgeIDs, witness.RequiredEvidenceIDs, witness.RequiredCellIDs, witness.RequiredStateKeys) {
+			return false
+		}
 	}
 	return true
 }
 
 func requiredIDsPresent(slice CausalSlice, nodes, edges, evidence, cells, state []string) bool {
-	for _, id := range nodes { if !slice.has("node", id) { return false } }
-	for _, id := range edges { if !slice.has("edge", id) { return false } }
-	for _, id := range evidence { if !slice.has("evidence", id) { return false } }
-	for _, id := range cells { if !slice.has("cell_dependency", id) { return false } }
-	for _, id := range state { if !slice.has("original_state", id) { return false } }
+	for _, id := range nodes {
+		if !slice.has("node", id) {
+			return false
+		}
+	}
+	for _, id := range edges {
+		if !slice.has("edge", id) {
+			return false
+		}
+	}
+	for _, id := range evidence {
+		if !slice.has("evidence", id) {
+			return false
+		}
+	}
+	for _, id := range cells {
+		if !slice.has("cell_dependency", id) {
+			return false
+		}
+	}
+	for _, id := range state {
+		if !slice.has("original_state", id) {
+			return false
+		}
+	}
 	return true
 }
 
 func blockedFrontierPresent(slice CausalSlice, frontier []string) bool {
 	for _, entry := range frontier {
 		parts := strings.SplitN(entry, ":", 2)
-		if len(parts) != 2 { continue }
+		if len(parts) != 2 {
+			continue
+		}
 		kind := parts[0]
 		switch kind {
 		case "node", "edge", "evidence", "original_state":
-		case "cell": kind = "cell_dependency"
-		default: continue
+		case "cell":
+			kind = "cell_dependency"
+		default:
+			continue
 		}
-		if !slice.has(kind, parts[1]) { return false }
+		if !slice.has(kind, parts[1]) {
+			return false
+		}
 	}
 	return true
 }
 
 func failureFor(input Input, unit deletionUnit, receipts []ReplayReceipt) PreservationFailure {
 	for _, receipt := range receipts {
-		if receipt.ObservedDecision != input.DecisionReport.Decision { return PreservationFailure{Unit: unit.Key(), Reason: "oracle observed a decision change"} }
+		if receipt.ObservedDecision != input.DecisionReport.Decision {
+			return PreservationFailure{Unit: unit.Key(), Reason: "oracle observed a decision change"}
+		}
 	}
-	if input.DecisionReport.Decision == Refuted && containsString(input.Oracle.WitnessLossOnDelete, unit.Key()) { return PreservationFailure{Unit: unit.Key(), Reason: "contradiction witness would be lost"} }
-	if input.DecisionReport.Decision == Unknown { return PreservationFailure{Unit: unit.Key(), Reason: "direct cause or blocked_by frontier would be lost"} }
+	if input.DecisionReport.Decision == Refuted && containsString(input.Oracle.WitnessLossOnDelete, unit.Key()) {
+		return PreservationFailure{Unit: unit.Key(), Reason: "contradiction witness would be lost"}
+	}
+	if input.DecisionReport.Decision == Unknown {
+		return PreservationFailure{Unit: unit.Key(), Reason: "direct cause or blocked_by frontier would be lost"}
+	}
 	return PreservationFailure{Unit: unit.Key(), Reason: "preservation predicate rejected the deletion"}
 }
 
@@ -293,7 +378,9 @@ func correctnessForBlock(input Input, result Result) Correctness {
 }
 
 func sameUnknownFields(left, right *UnknownDetails) bool {
-	if left == nil || right == nil { return left == right }
+	if left == nil || right == nil {
+		return left == right
+	}
 	return left.Stage == right.Stage && left.Step == right.Step && left.Reason == right.Reason && left.UnknownClass == right.UnknownClass && left.NextOperation == right.NextOperation && reflect.DeepEqual(left.BlockedBy, right.BlockedBy)
 }
 
@@ -313,16 +400,16 @@ func metricsFor(before, after CausalSlice, oracleCalls int, started time.Time) M
 	var memory runtime.MemStats
 	runtime.ReadMemStats(&memory)
 	return Metrics{
-		Nodes: IntegerVector{Before: len(before.Nodes), After: len(after.Nodes)},
-		Edges: IntegerVector{Before: len(before.Edges), After: len(after.Edges)},
-		Evidence: IntegerVector{Before: len(before.EvidenceDigests), After: len(after.EvidenceDigests)},
-		CellDependencies: IntegerVector{Before: len(before.CellDependencies), After: len(after.CellDependencies)},
-		OriginalStateKeys: IntegerVector{Before: len(before.OriginalState), After: len(after.OriginalState)},
-		OracleCalls: oracleCalls,
-		WallMS: int(time.Since(started).Milliseconds()),
-		PeakRSSKiB: int(memory.Sys / 1024),
-		RepositoryWrites: 0,
-		LocalTestExecutions: 0,
+		Nodes:                     IntegerVector{Before: len(before.Nodes), After: len(after.Nodes)},
+		Edges:                     IntegerVector{Before: len(before.Edges), After: len(after.Edges)},
+		Evidence:                  IntegerVector{Before: len(before.EvidenceDigests), After: len(after.EvidenceDigests)},
+		CellDependencies:          IntegerVector{Before: len(before.CellDependencies), After: len(after.CellDependencies)},
+		OriginalStateKeys:         IntegerVector{Before: len(before.OriginalState), After: len(after.OriginalState)},
+		OracleCalls:               oracleCalls,
+		WallMS:                    int(time.Since(started).Milliseconds()),
+		PeakRSSKiB:                int(memory.Sys / 1024),
+		RepositoryWrites:          0,
+		LocalTestExecutions:       0,
 		CrossProjectRequiredGates: 0,
 	}
 }
@@ -334,7 +421,11 @@ func sliceDigest(slice CausalSlice) string {
 }
 
 func containsString(items []string, want string) bool {
-	for _, item := range items { if item == want { return true } }
+	for _, item := range items {
+		if item == want {
+			return true
+		}
+	}
 	return false
 }
 
@@ -370,9 +461,12 @@ func buildProof(result Result, input Input, contract Contract) ProofVectors {
 	for _, invariant := range contract.Invariants {
 		entry := InvariantResult{Ordinal: invariant.Ordinal, ID: invariant.ID, Name: invariant.Name, Holds: holds[invariant.ID]}
 		switch invariant.Group {
-		case "FOUNDATION": proof.Foundation = append(proof.Foundation, entry)
-		case "COHERENCE": proof.Coherence = append(proof.Coherence, entry)
-		case "REGRESSION": proof.Regression = append(proof.Regression, entry)
+		case "FOUNDATION":
+			proof.Foundation = append(proof.Foundation, entry)
+		case "COHERENCE":
+			proof.Coherence = append(proof.Coherence, entry)
+		case "REGRESSION":
+			proof.Regression = append(proof.Regression, entry)
 		}
 	}
 	return proof
@@ -404,7 +498,13 @@ func buildIndicators(result Result) IndicatorDistribution {
 }
 
 func sameDecisions(left, right []Decision) bool {
-	if len(left) != len(right) { return false }
-	for index := range left { if left[index] != right[index] { return false } }
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
 	return true
 }
