@@ -1,0 +1,38 @@
+{
+  "schema": "gooo.causal-counterexample-reducer/input/v1",
+  "decision_report": {
+    "schema": "gooo.causal-counterexample-reducer/decision-report/v1",
+    "scenario": "direct-unknown",
+    "source_digest": "sha256:source-direct-unknown",
+    "contract_digest": "causal-counterexample-reducer-v1",
+    "fixture_digest": "sha256:fixture-direct-unknown",
+    "toolchain_digest": "sha256:go1.27",
+    "runner_digest": "sha256:runner-v1",
+    "decision": "UNKNOWN",
+    "priority": 2,
+    "direct_cause": "direct cause cannot yet be discharged",
+    "unknown": {
+      "stage": "evaluate",
+      "step": "resolve-direct-cause",
+      "reason": "direct cause evidence is insufficient",
+      "unknown_class": "direct-cause",
+      "next_operation": "inspect direct cause evidence",
+      "blocked_by": ["evidence:ev-anchor"],
+      "direct_cause": "direct cause cannot yet be discharged",
+      "required_node_ids": ["n-anchor"],
+      "required_edge_ids": ["e-anchor"],
+      "required_evidence_ids": ["ev-anchor"],
+      "required_cell_ids": ["cell-anchor"],
+      "required_state_keys": ["anchor"]
+    }
+  },
+  "causal_graph": {
+    "schema": "gooo.causal-counterexample-reducer/causal-graph/v1",
+    "nodes": [{"id": "n-anchor", "kind": "decision"}, {"id": "n-context", "kind": "context"}, {"id": "n-noise", "kind": "noise"}],
+    "edges": [{"id": "e-anchor", "from": "n-anchor", "to": "n-context"}, {"id": "e-noise", "from": "n-context", "to": "n-noise"}]
+  },
+  "evidence_digests": [{"id": "ev-anchor", "digest": "sha256:ev-anchor", "observed_digest": "sha256:ev-anchor", "fresh": true}, {"id": "ev-noise", "digest": "sha256:ev-noise", "observed_digest": "sha256:ev-noise", "fresh": true}],
+  "cell_dependencies": [{"id": "cell-anchor", "cell": "decision", "depends_on": []}, {"id": "cell-noise", "cell": "noise", "depends_on": ["cell-anchor"]}],
+  "original_state": {"anchor": "unresolved", "noise": "discardable"},
+  "oracle": {"available": true, "graph_bounded": true, "tie_break_unique": true, "replay_stable": true}
+}

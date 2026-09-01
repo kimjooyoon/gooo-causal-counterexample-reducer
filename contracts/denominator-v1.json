@@ -1,0 +1,50 @@
+{
+  "schema": "gooo/causal-counterexample-reducer/denominator/v1",
+  "denominator_id": "causal-counterexample-reducer-v1",
+  "unit": "causal_slice",
+  "scenario_count": 7,
+  "authority": "metacode",
+  "precedence": ["REFUTED", "UNKNOWN", "CLOSED"],
+  "unknown_fields": ["stage", "step", "reason", "unknown_class", "next_operation", "blocked_by"],
+  "proof_partition": {
+    "FOUNDATION": [
+      {"ordinal": 1, "id": "F01", "name": "immutable-input"},
+      {"ordinal": 2, "id": "F02", "name": "caller-owned-output"},
+      {"ordinal": 3, "id": "F03", "name": "fixed-order-deletion"},
+      {"ordinal": 4, "id": "F04", "name": "malformed-fail-closed"}
+    ],
+    "COHERENCE": [
+      {"ordinal": 5, "id": "C01", "name": "decision-precedence"},
+      {"ordinal": 6, "id": "C02", "name": "unknown-six-fields"},
+      {"ordinal": 7, "id": "C03", "name": "witness-or-frontier-preservation"},
+      {"ordinal": 8, "id": "C04", "name": "replay-receipt"}
+    ],
+    "REGRESSION": [
+      {"ordinal": 9, "id": "R01", "name": "provenance-tuple"},
+      {"ordinal": 10, "id": "R02", "name": "integer-metric-vectors"},
+      {"ordinal": 11, "id": "R03", "name": "no-global-minimum-claim"},
+      {"ordinal": 12, "id": "R04", "name": "runtime-zero-gates"}
+    ]
+  },
+  "indicator_distribution": {
+    "DRIVER": ["nodes_removed", "edges_removed", "evidence_removed", "cell_dependencies_removed"],
+    "OUTCOME": ["decision_preserved", "priority_preserved", "unknown_fields_preserved", "witness_preserved"],
+    "GUARDRAIL": ["oracle_calls", "wall_ms", "peak_rss_kib", "repository_writes"]
+  },
+  "runtime_contract": {
+    "repository_writes": 0,
+    "local_test_executions": 0,
+    "cross_project_required_gates": 0,
+    "output": "caller_owned_only"
+  },
+  "global_minimum_claim": false,
+  "scenarios": [
+    {"ordinal": 1, "id": "normal-reduction", "expected": "REFUTED"},
+    {"ordinal": 2, "id": "already-1-minimal", "expected": "REFUTED"},
+    {"ordinal": 3, "id": "direct-unknown", "expected": "UNKNOWN"},
+    {"ordinal": 4, "id": "dependency-blocked-unknown", "expected": "UNKNOWN"},
+    {"ordinal": 5, "id": "stale-evidence", "expected": "UNKNOWN"},
+    {"ordinal": 6, "id": "decision-change", "expected": "REFUTED"},
+    {"ordinal": 7, "id": "witness-loss", "expected": "REFUTED"}
+  ]
+}

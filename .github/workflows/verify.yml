@@ -1,0 +1,59 @@
+name: verify
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Go 1.27
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.x'
+          cache: true
+      - name: Normalize Go sources in transient checkout
+        run: |
+          normalized="$RUNNER_TEMP/formatted-go-source"
+          mkdir -p "$normalized"
+          while IFS= read -r -d '' file; do
+            gofmt -w "$file"
+            target="$normalized/${file#./}"
+            mkdir -p "$(dirname "$target")"
+            cp "$file" "$target"
+          done < <(find . -type f -name '*.go' -print0 | sort -z)
+      - name: Upload normalized Go sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-go-source
+          path: ${{ runner.temp }}/formatted-go-source
+          if-no-files-found: ignore
+      - name: Check formatting
+        run: test -z "$(gofmt -l .)"
+      - name: Test
+        run: go test ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Check shell syntax
+        run: bash -n scripts/conformance.sh
+      - name: Check workflow syntax
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          "$(go env GOPATH)/bin/actionlint"
+      - name: Run fixed conformance
+        run: bash scripts/conformance.sh "$RUNNER_TEMP/gooo-causal-counterexample-reducer"
+      - name: Upload conformance artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: causal-counterexample-reducer-conformance
+          path: ${{ runner.temp }}/gooo-causal-counterexample-reducer
+          if-no-files-found: ignore

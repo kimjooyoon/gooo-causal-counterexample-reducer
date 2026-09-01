@@ -1,0 +1,35 @@
+{
+  "schema": "gooo.causal-counterexample-reducer/input/v1",
+  "decision_report": {
+    "schema": "gooo.causal-counterexample-reducer/decision-report/v1",
+    "scenario": "stale-evidence",
+    "source_digest": "sha256:source-stale-evidence",
+    "contract_digest": "causal-counterexample-reducer-v1",
+    "fixture_digest": "sha256:fixture-stale-evidence",
+    "toolchain_digest": "sha256:go1.27",
+    "runner_digest": "sha256:runner-v1",
+    "decision": "UNKNOWN",
+    "priority": 2,
+    "direct_cause": "evidence binding is stale",
+    "unknown": {
+      "stage": "preflight",
+      "step": "check-evidence-digests",
+      "reason": "evidence digest is stale",
+      "unknown_class": "stale-evidence",
+      "next_operation": "refresh and rebind the stale evidence digest",
+      "blocked_by": ["evidence:ev-stale"],
+      "direct_cause": "evidence binding is stale",
+      "required_evidence_ids": ["ev-stale"],
+      "required_cell_ids": ["cell-anchor"]
+    }
+  },
+  "causal_graph": {
+    "schema": "gooo.causal-counterexample-reducer/causal-graph/v1",
+    "nodes": [{"id": "n-anchor", "kind": "decision"}, {"id": "n-noise", "kind": "noise"}],
+    "edges": [{"id": "e-anchor", "from": "n-anchor", "to": "n-noise"}]
+  },
+  "evidence_digests": [{"id": "ev-stale", "digest": "sha256:expected", "observed_digest": "sha256:observed", "fresh": false}],
+  "cell_dependencies": [{"id": "cell-anchor", "cell": "decision", "depends_on": []}],
+  "original_state": {"anchor": "stale"},
+  "oracle": {"available": true, "graph_bounded": true, "tie_break_unique": true, "replay_stable": true}
+}
